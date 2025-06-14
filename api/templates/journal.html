@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="script.js"></script>
+    <title>Journal Entry</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        #entries {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .entry {
+            background-color: #ffffff;
+            padding: 1rem 1.5rem;
+            border-left: 5px solid #4a90e2;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.2s ease;
+        }
+
+            .entry:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .entry strong {
+                color: #333;
+            }
+
+            .entry small {
+                color: #888;
+            }
+
+            .entry + .entry {
+                margin-top: 1rem;
+            }
+
+        #message {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        #showAllBtn {
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            #showAllBtn:hover {
+                background-color: #3a7ad9;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Daily Journal Entry</h2>
+        <form id="entryForm">
+            <label for="work">Work (max 255 characters):</label><br>
+            <textarea id="work" name="work" maxlength="255" rows="4" cols="50"></textarea>
+            <div id="work-count">0 / 255</div>
+
+            <label for="struggle">Struggle (max 255 characters):</label><br>
+            <textarea id="struggle" name="struggle" maxlength="255" rows="4" cols="50"></textarea>
+            <div id="struggle-count">0 / 255</div>
+
+            <label for="intention">Intention (max 255 characters):</label><br>
+            <textarea id="intention" name="intention" maxlength="255" rows="4" cols="50"></textarea>
+            <div id="intention-count">0 / 255</div>
+
+            <br>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="message"></div>
+
+        <h2>Past Entries</h2>
+        <div id="entries"></div>
+        <button id="showAllBtn">Show All Entries</button>
+    </div>
+
+
+    <script>
+
+        function updateCharCount(id, max) {
+            const input = document.getElementById(id);
+            const counter = document.getElementById(`${id}-count`);
+            input.addEventListener("input", () => {
+                counter.textContent = `${input.value.length} / ${max}`;
+            });
+        }
+
+        // Call the function for each field
+        updateCharCount("work", 255);
+        updateCharCount("struggle", 255);
+        updateCharCount("intention", 255);
+
+
+        const form = document.getElementById("entryForm");
+        const messageDiv = document.getElementById("message");
+
+        const entriesDiv = document.getElementById('entries');
+        const showAllBtn = document.getElementById('showAllBtn');
+
+        // Shared fetch function
+        async function fetchAndDisplayEntries(url) {
+            try {
+                const response = await fetch(url, {
+                    credentials: "include"
+                });
+                const entries = await response.json();
+
+                entriesDiv.innerHTML = ""; // Clear previous entries
+
+                entries.forEach(entry => {
+                    const e = entry.data; // Adjust if your data shape differs
+                    const entryElement = document.createElement('div');
+                    entryElement.classList.add('entry');
+                    entryElement.innerHTML = `
+                        <strong>Work:</strong> ${e.work || ''}<br>
+                        <strong>Struggle:</strong> ${e.struggle || ''}<br>
+                        <strong>Intention:</strong> ${e.intention || ''}<br>
+                        <small><em>Created: ${e.created_at || 'Unknown'}</em></small>
+                    `;
+                    entriesDiv.appendChild(entryElement);
+                });
+            } catch (error) {
+                console.error("Failed to fetch entries:", error);
+            }
+        }
+
+        // Load recent entries on page load
+        fetchAndDisplayEntries("http://localhost:8000/entries");
+
+        // Show all entries on button click
+        showAllBtn.addEventListener('click', () => {
+            fetchAndDisplayEntries("http://localhost:8000/entries");
+        });
+
+        // Handle form submission
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const entryData = {
+                work: form.work.value,
+                struggle: form.struggle.value,
+                intention: form.intention.value
+            };
+
+            try {
+                const response = await fetch("http://localhost:8000/entries/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(entryData),
+                    credentials: "include"
+                });
+
+                if (response.status === 201) {
+                    messageDiv.textContent = "Entry submitted successfully!";
+                    messageDiv.style.color = "green";
+                    form.reset();
+
+                    // Reload recent entries after submission
+                    fetchAndDisplayEntries("http://localhost:8000/entries");
+                } else {
+                    const error = await response.json();
+                    messageDiv.textContent = `Error: ${error.detail || "Something went wrong"}`;
+                    messageDiv.style.color = "red";
+                }
+            } catch (err) {
+                console.error(err);
+                messageDiv.textContent = "Network error. Could not submit.";
+                messageDiv.style.color = "red";
+            }
+        });
+    </script>
+
+
+
+</body>
+</html>
