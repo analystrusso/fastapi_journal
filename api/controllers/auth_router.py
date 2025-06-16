@@ -1,4 +1,8 @@
 # api/controllers/auth_router.py
+# This module handles user registration and login. 
+# It uses JSON Web Tokens for authentication, and it stores the session info in a cookie. 
+# The cookie's Secure tag will be set to True once HTTPS is enabled. 
+
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi_limiter.depends import RateLimiter
 from fastapi.security import OAuth2PasswordRequestForm
