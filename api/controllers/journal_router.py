@@ -1,3 +1,5 @@
+# This module handles API routes for adding, editing, and deleting
+# journal entries to the Postgres DB. 
 # api/controllers/journal_router.py
 
 import logging
