@@ -1,3 +1,7 @@
+# This module shows a model of a journal entry,
+# including how the data should be formatted
+# and presented in the event of a new or updated entry. 
+
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
