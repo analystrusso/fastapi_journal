@@ -1,3 +1,5 @@
+# This provides a model for user attributes, username and hashed password. 
+
 from pydantic import BaseModel
 
 
