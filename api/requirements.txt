@@ -1,4 +1,5 @@
 fastapi
+fastapi_cache
 uvicorn
 python-dotenv
 aiohttp

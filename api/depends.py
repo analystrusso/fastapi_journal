@@ -24,8 +24,19 @@ def get_user_repo(request: Request) -> UserRepository:
 async def get_current_user_from_cookie(access_token: str = Cookie(None)):
     if not access_token:
         raise HTTPException(status_code=401, detail="Missing token")
+    
     payload = decode_jwt_token(access_token)
+
     username = payload.get("sub")
+    role = payload.get("role")
+
     if not username:
         raise HTTPException(status_code=401, detail="Invalid token payload")
-    return username
+
+    return {"username": username, "role": role}
+
+
+async def require_admin(user=Depends(get_current_user_from_cookie)):
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user

@@ -1,9 +1,11 @@
 # api/controllers/journal_router.py
 
+import os
 import logging
 import redis
 import requests
 import json
+from pathlib import Path
 from typing import AsyncGenerator
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi_limiter.depends import RateLimiter
@@ -24,7 +26,12 @@ async def get_entry_service() -> AsyncGenerator[EntryService, None]:
         yield EntryService(db)
 
 
-templates = Jinja2Templates(directory="templates")
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = BASE_DIR / "templates"
+
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @router.get("/journal", response_class=HTMLResponse)
 async def journal_page(request: Request, current_user: str = Depends(get_current_user_from_cookie)):

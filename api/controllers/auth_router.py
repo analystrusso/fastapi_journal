@@ -1,4 +1,6 @@
 # api/controllers/auth_router.py
+
+from pathlib import Path
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi_limiter.depends import RateLimiter
 from fastapi.security import OAuth2PasswordRequestForm
@@ -18,7 +20,10 @@ import os
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent.parent  # this gets /api
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 @router.post("/register", dependencies=[Depends(RateLimiter(times=5, seconds=60))])
@@ -43,7 +48,7 @@ async def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_access_token(
-        data={"sub": user["username"]},
+        data={"sub": user["username"], "role": user["role"]},
         expires_delta=timedelta(minutes=30),
     )
 

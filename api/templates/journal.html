@@ -26,7 +26,15 @@
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
             transition: box-shadow 0.2s ease;
+	    white-space: pre-wrap;
+	    line-height: 1.4;
         }
+
+	.entry-block {
+    	margin-bottom: 1rem;
+	white-space: pre-wrap;
+	line-height: 1.6;
+	}
 
             .entry:hover {
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -87,7 +95,6 @@
 
         <h2>Past Entries</h2>
         <div id="entries"></div>
-        <button id="showAllBtn">Show All Entries</button>
     </div>
 
 
@@ -128,11 +135,11 @@
                     const entryElement = document.createElement('div');
                     entryElement.classList.add('entry');
                     entryElement.innerHTML = `
-                        <strong>Work:</strong> ${e.work || ''}<br>
-                        <strong>Struggle:</strong> ${e.struggle || ''}<br>
-                        <strong>Intention:</strong> ${e.intention || ''}<br>
-                        <small><em>Created: ${e.created_at || 'Unknown'}</em></small>
-                    `;
+			<div><strong>Work:</strong><br>${e.work || ''}</div>
+			<div><strong>Struggle:</strong><br>${e.struggle || ''}</div>
+			<div><strong>Intention:</strong><br>${e.intention || ''}</div>
+ 			<small><em>Created: ${e.created_at || 'Unknown'}</em></small>                    
+			`;
                     entriesDiv.appendChild(entryElement);
                 });
             } catch (error) {
@@ -141,12 +148,8 @@
         }
 
         // Load recent entries on page load
-        fetchAndDisplayEntries("http://localhost:8000/entries");
+        fetchAndDisplayEntries("https://ephemerismea.com/entries");
 
-        // Show all entries on button click
-        showAllBtn.addEventListener('click', () => {
-            fetchAndDisplayEntries("http://localhost:8000/entries");
-        });
 
         // Handle form submission
         form.addEventListener("submit", async (e) => {
@@ -159,7 +162,7 @@
             };
 
             try {
-                const response = await fetch("http://localhost:8000/entries/", {
+                const response = await fetch("https://ephemerismea.com/entries/", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -174,7 +177,7 @@
                     form.reset();
 
                     // Reload recent entries after submission
-                    fetchAndDisplayEntries("http://localhost:8000/entries");
+                    fetchAndDisplayEntries("https://ephemerismea.com/entries");
                 } else {
                     const error = await response.json();
                     messageDiv.textContent = `Error: ${error.detail || "Something went wrong"}`;

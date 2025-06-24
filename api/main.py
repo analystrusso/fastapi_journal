@@ -1,4 +1,8 @@
-from fastapi import FastAPI, Request
+import api.config
+from fastapi import FastAPI, Request, Depends
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from api.depends import get_current_user_from_cookie, require_admin
 from dotenv import load_dotenv
 import logging
 import fastapi_cache.decorator as fcd
@@ -51,7 +55,16 @@ async def lifespan(app: FastAPI):
     await redis.close()
     logging.info("Redis connection closed")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@app.get("/docs", include_in_schema=False)
+async def protected_docs(user=Depends(require_admin)):
+    return get_swagger_ui_html(openapi_url="/openapi.json", title="Protected Docs")
+
+@app.get("/openapi.json", include_in_schema=False)
+async def protected_openapi(user=Depends(require_admin)):
+    return get_openapi(title=app.title, version=app.version, routes=app.routes)
 
 app.include_router(journal_router)
 app.include_router(auth_router)
