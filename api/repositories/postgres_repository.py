@@ -56,7 +56,7 @@ class PostgresDB(DatabaseInterface):
 
     async def get_entries(self) -> List[Dict[str, Any]]:
         async with self.pool.acquire() as conn:
-            query = "SELECT * FROM journal_entries"
+            query = "SELECT * FROM journal_entries ORDER BY (data->>'created_at')::timestamptz DESC"
             rows = await conn.fetch(query)
             return [
                 {
