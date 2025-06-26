@@ -1,10 +1,12 @@
-from fastapi import Depends, Request, Cookie
+from email.policy import HTTP
+from re import S
+from fastapi import Depends, Request, Cookie, HTTPException, status
 from api.repositories.user_repository import UserRepository
 from fastapi import Request, HTTPException, status, Depends
 from api.security.jwt_utils import decode_jwt_token  # your decode function
-from jose import JWTError
+from jose import JWTError, jwt
+from redis.asyncio import Redis
 import asyncpg
-
 
 
 
@@ -24,8 +26,23 @@ def get_user_repo(request: Request) -> UserRepository:
 async def get_current_user_from_cookie(access_token: str = Cookie(None)):
     if not access_token:
         raise HTTPException(status_code=401, detail="Missing token")
-    
-    payload = decode_jwt_token(access_token)
+
+    try:
+        payload = jwt.decode(access_token)
+        jti = payload.get("jti")
+        if not jti:
+            raise HTTPException(status_code=401, detail="Invalid token: missing jti")
+
+        # Check if the token jti is still valid
+        exists = await Redis.get(f"jti:{jti}")
+        if not exists:
+            raise HTTPException(status_code=401, detail="Token has been revoked")
+
+        return payload  # or fetch and return the user
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 
     username = payload.get("sub")
     role = payload.get("role")

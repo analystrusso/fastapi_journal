@@ -14,9 +14,11 @@ from api.security.jwt_utils import create_jwt_token
 from api.services.auth_service import authenticate_user, create_access_token
 from api.repositories.user_repository import UserRepository
 from passlib.context import CryptContext
+from jose import jwt, JWTError
 import asyncpg
 import aioredis
 import os
+
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -80,6 +82,16 @@ async def login_page(request: Request):
 
 @router.post("/logout")
 async def logout(request: Request):
+    token = request.cookies.get("access_token")
+    if token:
+        try:
+            payload = jwt.decode(token)
+            jti = payload.get("jti")
+            if jti:
+                await redis.delete(f"jti:{jti}")
+        except JWTError:
+            pass  # Invalid token, just ignore
+
     response = JSONResponse({"message": "Logout successful"})
     response.delete_cookie("access_token")
     return response
