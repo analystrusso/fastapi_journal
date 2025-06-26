@@ -10,13 +10,13 @@ from fastapi.templating import Jinja2Templates
 from api.depends import get_user_repo
 from datetime import timedelta
 from api.models.user import UserCreate
-from api.security.jwt_utils import create_jwt_token
+from api.security.jwt_utils import create_jwt_token, SECRET_KEY, ALGORITHM
 from api.services.auth_service import authenticate_user, create_access_token
 from api.repositories.user_repository import UserRepository
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+from redis.asyncio import Redis
 import asyncpg
-import aioredis
 import os
 
 
@@ -29,7 +29,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-redis = aioredis.from_url(REDIS_URL)
+redis = Redis.from_url(REDIS_URL)
 
 
 @router.post("/register", dependencies=[Depends(RateLimiter(times=5, seconds=60))])
@@ -70,7 +70,7 @@ async def login(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="Lax",
         max_age=1800,
     )
@@ -85,7 +85,7 @@ async def logout(request: Request):
     token = request.cookies.get("access_token")
     if token:
         try:
-            payload = jwt.decode(token)
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             jti = payload.get("jti")
             if jti:
                 await redis.delete(f"jti:{jti}")
