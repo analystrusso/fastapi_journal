@@ -15,8 +15,6 @@ from api.repositories.user_repository import UserRepository
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 import os
-
-# Use redis-py (merged aioredis)
 from redis.asyncio import Redis
 
 router = APIRouter()
@@ -61,7 +59,7 @@ async def login(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,  # Set to True in production with HTTPS
+        secure=False,
         samesite="Lax",
         max_age=1800,
     )

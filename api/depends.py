@@ -3,12 +3,12 @@ from re import S
 from fastapi import Depends, Request, Cookie, HTTPException, status
 from api.repositories.user_repository import UserRepository
 from fastapi import Request, HTTPException, status, Depends
-from api.security.jwt_utils import decode_jwt_token  # your decode function
+from api.security.jwt_utils import decode_jwt_token, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from redis.asyncio import Redis
 import asyncpg
 
-
+redis = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 def get_db_pool(request: Request) -> asyncpg.Pool:
     pool = request.app.state.db_pool
@@ -28,30 +28,26 @@ async def get_current_user_from_cookie(access_token: str = Cookie(None)):
         raise HTTPException(status_code=401, detail="Missing token")
 
     try:
-        payload = jwt.decode(access_token)
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         jti = payload.get("jti")
         if not jti:
             raise HTTPException(status_code=401, detail="Invalid token: missing jti")
 
-        # Check if the token jti is still valid
-        exists = await Redis.get(f"jti:{jti}")
+        # Check if token is revoked
+        exists = await redis.get(f"jti:{jti}")
         if not exists:
             raise HTTPException(status_code=401, detail="Token has been revoked")
 
-        return payload  # or fetch and return the user
+        username = payload.get("sub")
+        role = payload.get("role")
+
+        if not username:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+
+        return {"username": username, "role": role}
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-
-    username = payload.get("sub")
-    role = payload.get("role")
-
-    if not username:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-
-    return {"username": username, "role": role}
-
 
 async def require_admin(user=Depends(get_current_user_from_cookie)):
     if user["role"] != "admin":
