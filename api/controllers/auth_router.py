@@ -1,7 +1,7 @@
 # api/controllers/auth_router.py
 
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Response
 from fastapi_limiter.depends import RateLimiter
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
@@ -66,3 +66,9 @@ async def login(
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+@router.post("/logout")
+async def logout(request: Request):
+    response = JSONResponse({"message": "Logout successful"})
+    response.delete_cookie(key="access_token")
+    return response

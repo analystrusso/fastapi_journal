@@ -73,6 +73,9 @@
     </style>
 </head>
 <body>
+
+    <button id="logoutButton">Logout</button>
+
     <div class="container">
         <h2>Daily Journal Entry</h2>
         <form id="entryForm">
@@ -99,6 +102,24 @@
 
 
     <script>
+
+        const logoutButton = document.getElementById("logoutButton")
+
+        logoutButton.addEventListener("click", logout);
+
+        async function logout() {
+            try {
+                await fetch("https://ephemerismea.com/logout", {
+                    method: "POST",
+                    credentials: "include"
+                });
+            } catch (error) {
+                console.error("Logoout failed", error);
+            } finally {
+                window.location.href = "login.html"
+            }
+        }
+
 
         function updateCharCount(id, max) {
             const input = document.getElementById(id);
@@ -135,11 +156,11 @@
                     const entryElement = document.createElement('div');
                     entryElement.classList.add('entry');
                     entryElement.innerHTML = `
-			<div><strong>Work:</strong><br>${e.work || ''}</div>
-			<div><strong>Struggle:</strong><br>${e.struggle || ''}</div>
-			<div><strong>Intention:</strong><br>${e.intention || ''}</div>
- 			<small><em>Created: ${e.created_at || 'Unknown'}</em></small>                    
-			`;
+                <div><strong>Work:</strong><br>${e.work || ''}</div>
+                <div><strong>Struggle:</strong><br>${e.struggle || ''}</div>
+                <div><strong>Intention:</strong><br>${e.intention || ''}</div>
+              <small><em>Created: ${e.created_at || 'Unknown'}</em></small>
+                `;
                     entriesDiv.appendChild(entryElement);
                 });
             } catch (error) {
