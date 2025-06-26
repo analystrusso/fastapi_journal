@@ -15,6 +15,7 @@ from api.services.auth_service import authenticate_user, create_access_token
 from api.repositories.user_repository import UserRepository
 from passlib.context import CryptContext
 import asyncpg
+import aioredis
 import os
 
 router = APIRouter()
@@ -24,6 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # this gets /api
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis = aioredis.from_url(REDIS_URL)
 
 
 @router.post("/register", dependencies=[Depends(RateLimiter(times=5, seconds=60))])
@@ -47,10 +51,17 @@ async def login(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    token = create_access_token(
+    # token = create_access_token(
+    #     data={"sub": user["username"], "role": user["role"]},
+    #     expires_delta=timedelta(minutes=30),
+    # )
+
+    token, jti = create_access_token(
         data={"sub": user["username"], "role": user["role"]},
         expires_delta=timedelta(minutes=30),
     )
+
+    await redis.setex(f"jti:{jti}", 1800, "valid")
 
     response = JSONResponse({"message": "Login successful"})
     response.set_cookie(
