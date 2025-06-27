@@ -5,10 +5,11 @@ from api.repositories.user_repository import UserRepository
 from fastapi import Request, HTTPException, status, Depends
 from api.security.jwt_utils import decode_jwt_token, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
-from redis.asyncio import Redis
+from redis.asyncio import from_url
+import os
 import asyncpg
 
-redis = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis = from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
 
 def get_db_pool(request: Request) -> asyncpg.Pool:
     pool = request.app.state.db_pool

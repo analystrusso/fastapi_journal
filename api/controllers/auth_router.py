@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from api.depends import get_user_repo
 from datetime import timedelta
 from api.models.user import UserCreate
-from api.security.jwt_utils import create_access_token, SECRET_KEY, ALGORITHM
+from api.security.jwt_utils import create_jwt_token, SECRET_KEY, ALGORITHM
 from api.services.auth_service import authenticate_user
 from api.repositories.user_repository import UserRepository
 from passlib.context import CryptContext
@@ -47,7 +47,7 @@ async def login(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    token, jti = create_access_token(
+    token, jti = create_jwt_token(
         data={"sub": user["username"], "role": user["role"]},
         expires_delta=timedelta(minutes=30),
     )

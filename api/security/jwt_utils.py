@@ -20,7 +20,7 @@ def create_jwt_token(data: Dict, expires_delta: timedelta = timedelta(minutes=30
     jti = str(uuid.uuid4())
     to_encode.update({"exp": expire, "jti": jti})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt, jti
 
 def decode_jwt_token(token: str) -> Dict:
     try:
