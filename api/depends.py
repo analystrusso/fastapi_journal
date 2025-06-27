@@ -30,14 +30,7 @@ async def get_current_user_from_cookie(access_token: str = Cookie(None)):
 
     try:
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        jti = payload.get("jti")
-        if not jti:
-            raise HTTPException(status_code=401, detail="Invalid token: missing jti")
 
-        # Check if token is revoked
-        exists = await redis.get(f"jti:{jti}")
-        if not exists:
-            raise HTTPException(status_code=401, detail="Token has been revoked")
 
         username = payload.get("sub")
         role = payload.get("role")
