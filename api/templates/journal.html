@@ -123,9 +123,9 @@
 
         function updateCharCount(id, max) {
             const input = document.getElementById(id);
-            const counter = document.getElementById(`${id}-count`);
+            const counter = document.getElementById(${id}-count);
             input.addEventListener("input", () => {
-                counter.textContent = `${input.value.length} / ${max}`;
+                counter.textContent = ${input.value.length} / ${max};
             });
         }
 
@@ -155,12 +155,12 @@
                     const e = entry.data; // Adjust if your data shape differs
                     const entryElement = document.createElement('div');
                     entryElement.classList.add('entry');
-                    entryElement.innerHTML = `
+                    entryElement.innerHTML = 
                 <div><strong>Work:</strong><br>${e.work || ''}</div>
                 <div><strong>Struggle:</strong><br>${e.struggle || ''}</div>
                 <div><strong>Intention:</strong><br>${e.intention || ''}</div>
               <small><em>Created: ${e.created_at || 'Unknown'}</em></small>
-                `;
+                ;
                     entriesDiv.appendChild(entryElement);
                 });
             } catch (error) {
@@ -201,7 +201,7 @@
                     fetchAndDisplayEntries("https://ephemerismea.com/entries");
                 } else {
                     const error = await response.json();
-                    messageDiv.textContent = `Error: ${error.detail || "Something went wrong"}`;
+                    messageDiv.textContent = Error: ${error.detail || "Something went wrong"};
                     messageDiv.style.color = "red";
                 }
             } catch (err) {
