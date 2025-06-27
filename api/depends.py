@@ -1,25 +1,20 @@
-from email.policy import HTTP
-from re import S
-from fastapi import Depends, Request, Cookie, HTTPException, status
+from fastapi import Depends, Cookie, HTTPException
 from api.repositories.user_repository import UserRepository
-from fastapi import Request, HTTPException, status, Depends
 from api.security.jwt_utils import decode_jwt_token, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from redis.asyncio import from_url
 import os
 import asyncpg
-import os
 
 redis = from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
 
-def get_db_pool(request: Request) -> asyncpg.Pool:
+def get_db_pool(request):
     pool = request.app.state.db_pool
     if pool is None:
         raise RuntimeError("Database pool is not initialized")
     return pool
 
-
-def get_user_repo(request: Request) -> UserRepository:
+def get_user_repo(request) -> UserRepository:
     repo = request.app.state.user_repo
     if not isinstance(repo, UserRepository):
         raise RuntimeError("User repository is not initialized")
@@ -31,7 +26,13 @@ async def get_current_user_from_cookie(access_token: str = Cookie(None)):
 
     try:
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        jti = payload.get("jti")
+        if not jti:
+            raise HTTPException(status_code=401, detail="Invalid token: missing jti")
 
+        exists = await redis.get(f"jti:{jti}")
+        if not exists:
+            raise HTTPException(status_code=401, detail="Token has been revoked")
 
         username = payload.get("sub")
         role = payload.get("role")
