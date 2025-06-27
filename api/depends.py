@@ -7,6 +7,7 @@ from api.security.jwt_utils import decode_jwt_token, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from redis.asyncio import Redis
 import asyncpg
+import os
 
 redis = os.getenv("REDIS_URL", "redis://localhost:6379")
 
