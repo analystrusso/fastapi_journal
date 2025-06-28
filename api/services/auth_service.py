@@ -17,7 +17,7 @@ async def authenticate_user(repo: UserRepository, username: str, password: str) 
     return None
 
 
-def create_access_token(data: dict, expires_delta: timedelta):
+def create_jwt_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
