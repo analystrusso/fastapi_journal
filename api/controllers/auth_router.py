@@ -53,6 +53,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), repo: UserRepo
         secure=True,
         samesite="Lax",
         max_age=1800,
+        path="/"
     )
     return response
 
