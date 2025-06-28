@@ -50,7 +50,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), repo: UserRepo
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="Lax",
         max_age=1800,
     )
