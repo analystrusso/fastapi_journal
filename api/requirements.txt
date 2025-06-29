@@ -1,10 +1,7 @@
 fastapi
-fastapi_cache
 uvicorn
 python-dotenv
 aiohttp
 sqlalchemy
 psycopg2-binary
 asyncpg
-bcrypt==4.1.2
-passlib==1.7.4

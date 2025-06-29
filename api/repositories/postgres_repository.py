@@ -10,13 +10,9 @@ from api.repositories.interface_respository import DatabaseInterface
 
 load_dotenv()
 
-
-def get_database_url():
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        raise ValueError("DATABASE_URL environment variable not set")
-    return db_url
-
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is missing")
 
 class PostgresDB(DatabaseInterface):
     @staticmethod
@@ -27,36 +23,30 @@ class PostgresDB(DatabaseInterface):
         raise TypeError(f"Type {type(obj)} not serializable")
         
     async def __aenter__(self):
-        self.pool = await asyncpg.create_pool(get_database_url())
+        self.pool = await asyncpg.create_pool(DATABASE_URL)
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.pool.close()
 
-    async def create_entry(self, entry_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_entry(self, entry_data: Dict[str, Any]) -> None:
         async with self.pool.acquire() as conn:
-            entry_id = entry_data.get("id") or str(uuid.uuid4())
-            now = datetime.now(timezone.utc)
-        
-            # Add timestamps inside entry_data dict
-            entry_data["created_at"] = now
-            entry_data["updated_at"] = now
-        
-            data_json = json.dumps(entry_data, default=PostgresDB.datetime_serialize)
-        
             query = """
-            INSERT INTO journal_entries (id, data)
-            VALUES ($1, $2)
+            INSERT INTO journal_entries (id, data, created_at, updated_at)
+            VALUES ($1, $2, $3, $4)
             """
-            await conn.execute(query, entry_id, data_json)
-        
-            # Return full entry with id and timestamps
-            entry_data["id"] = entry_id
-            return entry_data
+            entry_id = entry_data.get("id") or str(uuid.uuid4())
+
+            now = datetime.now(timezone.utc).isoformat()
+
+            #data_json = json.dumps(entry_data, default=PostgresDB.datetime_serialize)
+            data_json = {
+                key: value for key, value in entry_data.items() if key not in ("created_at", "updated_at")}
+            await conn.execute(query, entry_id, json.dumps(data_json), now, now)
 
     async def get_entries(self) -> List[Dict[str, Any]]:
         async with self.pool.acquire() as conn:
-            query = "SELECT * FROM journal_entries ORDER BY (data->>'created_at')::timestamptz DESC"
+            query = "SELECT * FROM journal_entries"
             rows = await conn.fetch(query)
             return [
                 {
@@ -77,8 +67,9 @@ class PostgresDB(DatabaseInterface):
                 return entry
             return None
    
-    async def update_entry(self, entry_id: str, updated_data: Dict[str, Any]) -> Dict[str, Any]:
-        updated_at = datetime.now(timezone.utc)
+    async def update_entry(self, entry_id: str, updated_data: Dict[str, Any]) -> None:
+        now = datetime.now(timezone.utc).astimezone().isoformat()
+        updated_at = now
         updated_data["id"] = entry_id
         updated_data["updated_at"] = updated_at
 
@@ -86,13 +77,11 @@ class PostgresDB(DatabaseInterface):
 
         async with self.pool.acquire() as conn:
             query = """
-            UPDATE journal_entries
-            SET data = $2
+            UPDATE journal_entries 
+            SET data = $2, updated_at = $3
             WHERE id = $1
             """
-            await conn.execute(query, entry_id, data_json)
-
-        return updated_data
+            await conn.execute(query, entry_id, data_json, updated_at)
 
     async def delete_entry(self, entry_id: str) -> None:
         async with self.pool.acquire() as conn:

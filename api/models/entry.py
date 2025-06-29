@@ -1,18 +1,14 @@
-# This module shows a model of a journal entry,
-# including how the data should be formatted
-# and presented in the event of a new or updated entry. 
-
+from dataclasses import field
+import bleach.sanitizer
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from uuid import uuid4
+from pydantic import BaseModel, Field, field_validator
+
+import bleach
 
 class Entry(BaseModel):
-    # TODO: Add field validation rules
-    # TODO: Add custom validators
-    # TODO: Add schema versioning
-    # TODO: Add data sanitization methods
-    
     id: str = Field(
         default_factory=lambda: str(uuid4()),
         description="Unique identifier for the entry (UUID)."
@@ -20,34 +16,50 @@ class Entry(BaseModel):
     work: str = Field(
         ...,
         max_length=256,
-        pattern=r'^[a-zA-Z0-9\s.,!?\'"-]+$',
         description="What did you work on today?"
     )
     struggle: str = Field(
         ...,
         max_length=256,
-        pattern=r'^[a-zA-Z0-9\s.,!?\'"-]+$',
         description="What’s one thing you struggled with today?"
     )
     intention: str = Field(
         ...,
         max_length=256,
-        pattern=r'^[a-zA-Z0-9\s.,!?\'"-]+$',
         description="What will you study/work on tomorrow?"
     )
+    created_at: Optional[datetime] = Field(
+        default_factory=datetime.utcnow,
+        description="Timestamp when the entry was created."
+    )
+    updated_at: Optional[datetime] = Field(
+        default_factory=datetime.utcnow,
+        description="Timestamp when the entry was last updated."
+    )
+    schema_version: int = Field(
+        default=1,
+        description="Version of the schema used to represent the entry."
+    )
+
+    
+    @field_validator("work", "struggle", "intention")
+    @classmethod
+    def no_empty_strings(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Field cannot be empty or whitespace.")
+        return v
 
 
-class EntryCreate(BaseModel):
-    work: str = Field(..., max_length=256)
-    struggle: str = Field(..., max_length=256)
-    intention: str = Field(..., max_length=256)
+    @field_validator("work", "struggle", "intention", mode="before")
+    def sanitize_html(cls, value: str) -> str:
+         return bleach.clean(value, tags=[], attributes={}, strip=True)
 
 
-class EntryUpdate(BaseModel):
-    work: Optional[str] = Field(None, max_length=256)
-    struggle: Optional[str] = Field(None, max_length=256)
-    intention: Optional[str] = Field(None, max_length=256)
-
+    # @field_validator("created_at", "updated_at")
+    # def validate_datetime(cls, value):
+    #     if not isinstance(value, datetime):
+    #         raise ValueError("Timestamp must be a datetime object.")
+    #     return value
 
 
     # Optional: add a partition key if your Cosmos DB collection requires it
