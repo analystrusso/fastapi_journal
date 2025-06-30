@@ -64,8 +64,8 @@ class EntryService:
             k: v for k, v in updated_data.items() if k not in ("id","created_at", "updated_at")}
         
         updated_data = {
+            **data_json,
             "id": entry_id,
-            "data": data_json,
             "created_at": created_at,
             "updated_at": now
         }

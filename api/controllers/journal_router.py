@@ -65,7 +65,7 @@ async def get_entry(request: Request, entry_id: str):
 
 
 
-@router.patch("/entries/{entry_id}")
+@router.put("/entries/{entry_id}")
 async def update_entry(request: Request, entry_id: str, entry_update: dict):
     async with PostgresDB() as db:
         entry_service = EntryService(db)
